@@ -24,7 +24,7 @@
     "type": "git",
     "url": "git+https://github.com/Holixus/nano-memfs.git"
   },
-  "keywords": [ 'nano', 'memfs' ],
+  "keywords": [ "nano", "memfs" ],
   "author": "Vladimir Antonov <me@holix.ru>",
   "license": "MIT",
   "bugs": {

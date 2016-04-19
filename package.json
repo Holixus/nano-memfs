@@ -1,0 +1,34 @@
+{
+  "name": "nano-memfs",
+  "version": "1.0.0",
+  "description": "A minimal mock(in-memory) file system module for my projects (like nano-mill)",
+  "main": "memfs.js",
+  "scripts": {
+    "test": "mocha --reporter spec -u tdd",
+    "test-cov": "istanbul cover node_modules/mocha/bin/_mocha -- --reporter dot -u tdd",
+    "test-travis": "istanbul cover node_modules/mocha/bin/_mocha --report lcovonly -- --reporter dot -u tdd"
+  },
+  "dependencies": {
+  },
+  "devDependencies": {
+    "core-assert": "0",
+    "clone": "1",
+    "nano-timer": "1",
+    "nano-promise": "1",
+    "nano-json": "1",
+    "mocha": "2",
+    "colors": "0",
+    "istanbul": "0"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Holixus/nano-memfs.git"
+  },
+  "keywords": [ 'nano', 'memfs' ],
+  "author": "Vladimir Antonov <me@holix.ru>",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/Holixus/nano-memfs/issues"
+  },
+  "homepage": "https://github.com/Holixus/nano-memfs#readme"
+}

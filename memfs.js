@@ -69,7 +69,7 @@ function resolve(root, path, link) {
 		if (typeof folder !== 'object')
 			err('ENOTDIR');
 	}
-	return [ { root: root }, 'root' ];
+	return [ root, '' ];
 }
 
 function JsFsStatFile(data) {
@@ -108,6 +108,8 @@ function JsFS(obj) {
 JsFS.prototype = {
 	readNode: function (path) {
 		return (function (folder, key) {
+			if (!key)
+				return folder;
 			if (!(key in folder))
 				error('ENOENT', path);
 			return folder[key];
@@ -123,25 +125,47 @@ JsFS.prototype = {
 
 	writeFile: function (path, data) {
 		var res = resolve(this.folder, path);
-		if ((res[1] in res[0]) && typeof res[0][res[1]] !== 'string')
+		if (!res[1]|| ((res[1] in res[0]) && typeof res[0][res[1]] !== 'string'))
 			error('EISDIR', path);
 		res[0][res[1]] = data;
+	},
+
+	readTree: function (path) {
+		return clone(this.readNode(path));
+	},
+
+	writeTree: function (path, tree) {
+		if (typeof tree !== 'object')
+			return this.writeFile(path, tree);
+		var res = resolve(this.folder, path);
+		if (!res[1]) {
+			this.folder = clone(tree);
+			return;
+		}
+		if ((res[1] in res[0]) && typeof res[0][res[1]] === 'string')
+			error('ENOTDIR', path);
+		res[0][res[1]] = clone(tree);
 	},
 
 	copy: function (src, dst) {
 		var root = this.folder
 		return (function (folder, key) {
-			if (!(key in folder))
+			if (key && !(key in folder))
 				error('ENOENT', src);
-			var snode = folder[key],
+			var snode = key ? folder[key] : folder,
 			    d = resolve(root, dst);
-			if (d[1] in d[0]) {
-				var dnode = d[0][d[1]];
+			if (!d[1] || d[1] in d[0]) {
+				var dnode = d[1] ? d[0][d[1]] : root;
 				switch ((typeof dnode === 'string' ? 1 : 0) + (typeof snode === 'string' ? 2 : 0)) {
 				case 0: // folder -> folder
 					if (key in dnode)
 						error('EEXIST', dst+'/'+key);
-					dnode[key] = clone(snode);
+					var cl = clone(snode);
+					if (key)
+						dnode[key] = cl;
+					else
+						if (d[1])
+							d[0][d[1]] = cl;
 					break;
 				case 1: // folder -> file
 					error('ENOTDIR', dst+'/'+key);
@@ -168,7 +192,7 @@ JsFS.prototype = {
 		delete res[0][res[1]];
 	},
 
-	readTree: function (path) {
+	listFiles: function (path) {
 		var files = [];
 		function scan(rec, up) {
 			if (typeof rec === 'string')
@@ -183,6 +207,7 @@ JsFS.prototype = {
 		scan(node);
 		return files;
 	},
+
 
 	mkdir: function (path) {
 		return (function (folder, key) {
@@ -207,11 +232,13 @@ JsFS.prototype = {
 
 	empty: function (path) {
 		var res = resolve(this.folder, path);
-		if (!(res[1] in res[0]))
-			error('ENOENT', path);
-		if (typeof res[0][res[1]] === 'string')
-			error('ENOTDIR', path);
-		var dir = res[0][res[1]];
+		if (res[1]) {
+			if (!(res[1] in res[0]))
+				error('ENOENT', path);
+			if (typeof res[0][res[1]] === 'string')
+				error('ENOTDIR', path);
+		}
+		var dir = res[1] ? res[0][res[1]] : this.folder;
 		Object.keys(dir).forEach(function (id) { delete dir[id]; });
 	}
 };

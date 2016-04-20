@@ -166,7 +166,9 @@ suite('copy', function () {
 		['over', '/cop'], { folder:{ subfile:'p', subFile:'ere', subfolder:{ o:'o' } }, Folder:{ }, over:'o', cop:'o' },
 		['over', '/folder/cop'], { folder:{ subfile:'p', subFile:'ere', subfolder:{ o:'o' }, cop:'o' }, Folder:{ }, over:'o' },
 		['over', '/folder/subfile'], { folder:{ subfile:'o', subFile:'ere', subfolder:{ o:'o' } }, Folder:{ }, over:'o' },
-		['folder', 'Folder/al'], { folder:{ subfile:'p', subFile:'ere', subfolder:{ o:'o' } }, Folder:{ al:{ subfile:'p', subFile:'ere', subfolder:{ o:'o' } } }, over:'o' }
+		['folder', 'Folder/al'], { folder:{ subfile:'p', subFile:'ere', subfolder:{ o:'o' } }, Folder:{ al:{ subfile:'p', subFile:'ere', subfolder:{ o:'o' } } }, over:'o' },
+		['', 'Folder'], { folder:{ subfile:'p', subFile:'ere', subfolder: { o: 'o' } }, Folder:{ folder:{ subfile:'p', subFile:'ere', subfolder: { o: 'o' } }, Folder:{}, over:'o' }, over:'o' },
+		['', ''], { folder:{ subfile:'p', subFile:'ere', subfolder: { o: 'o' } }, Folder:{ }, over:'o' }
 	]);
 
 	massive_fails('fails', copy, [
@@ -178,7 +180,7 @@ suite('copy', function () {
 });
 
 
-suite('readTree', function () {
+suite('listFiles', function () {
 	var fs = new JsFS({
 			folder:{
 				subfile:'p',
@@ -187,17 +189,17 @@ suite('readTree', function () {
 			over:'o'
 		});
 
-	function readTree(a) {
-		return fs.readTree(a).sort();
+	function listFiles(a) {
+		return fs.listFiles(a).sort();
 	}
 
-	massive('goods', readTree, [
+	massive('goods', listFiles, [
 		'', [ 'folder/subFile', 'folder/subfile', 'over' ],
 		'folder', [ 'subFile', 'subfile'],
 		'Folder', []
 	]);
 
-	massive_fails('fails', readTree, [
+	massive_fails('fails', listFiles, [
 		'blah', Error, 'ENOENT',
 		'over', Error, 'ENOTDIR'
 	]);
@@ -277,4 +279,74 @@ suite('empty', function () {
 	]);
 });
 
+suite('readTree', function () {
+	test('.readTree(dir)', function (done) {
+		var tree = {
+		    	file: 'content',
+		    	folder: {
+		    		subfile: 'content'
+		    	}
+		    },
+		    fs = new JsFS(tree);
+		assert.deepStrictEqual(fs.readTree(''), tree);
+		done();
+	});
+});
 
+suite('writeTree', function () {
+	test('.writeTree("", tree)', function (done) {
+		var tree = {
+		    	file: 'content',
+		    	folder: {
+		    		subfile: 'content'
+		    	}
+		    },
+		    fs = new JsFS({});
+		fs.writeTree('', tree);
+		assert.deepStrictEqual(fs.readTree(''), tree);
+		done();
+	});
+
+	test('.writeTree(dir, tree)', function (done) {
+		var tree = {
+		    	file: 'content',
+		    	folder: {
+		    		subfile: 'content'
+		    	}
+		    },
+		    fs = new JsFS({});
+		fs.writeTree('folder', tree.folder);
+		assert.deepStrictEqual(fs.readTree(''), { folder: tree.folder });
+		done();
+	});
+
+	test('.writeTree(dir, str)', function (done) {
+		var tree = {
+		    	file: 'content',
+		    	folder: {
+		    		subfile: 'content'
+		    	}
+		    },
+		    fs = new JsFS({});
+		fs.writeTree('file', tree.file);
+		assert.deepStrictEqual(fs.readTree(''), { file: tree.file });
+		done();
+	});
+
+	var tree = {
+	    	file: 'content',
+	    	folder: {
+	    		subfile: 'content'
+	    	}
+	    },
+	    fs = new JsFS(tree);
+
+	function wt(dir, val) {
+		fs.writeTree(dir, val);
+	}
+
+	massive_fails('fails', wt, [
+		[ 'file', {} ], Error, 'ENOTDIR'
+	]);
+
+});
